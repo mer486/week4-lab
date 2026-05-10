@@ -27,3 +27,33 @@ services:
       timeout: 5s
       retries: 3
     restart: unless-stopped
+
+  payment-service:
+    build: ./payment-service
+    container_name: payment-service
+    ports:
+      - "5003:5003"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      PRODUCT_SERVICE_URL: http://product-service:5001
+      ORDER_SERVICE_URL: http://order-service:5002
+      PAYMENT_SERVICE_URL: http://payment-service:5003
+    depends_on:
+      product-service:
+        condition: service_healthy
+      order-service:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+    restart: unless-stopped
