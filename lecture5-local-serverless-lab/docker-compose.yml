@@ -1,0 +1,41 @@
+services:
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  event-source:
+    build: ./event_source
+    container_name: event-source
+    volumes:
+      - ./data/input:/data/input
+    depends_on:
+      - redis
+
+  event-router:
+    build: ./router
+    container_name: event-router
+    depends_on:
+      - redis
+      - image-resizer
+      - thumbnail
+      - notifier
+
+  image-resizer:
+    build: ./functions/image_resizer
+    container_name: image-resizer
+    volumes:
+      - ./data/input:/data/input
+      - ./data/output:/data/output
+
+  thumbnail:
+    build: ./functions/thumbnail
+    container_name: thumbnail
+    volumes:
+      - ./data/input:/data/input
+      - ./data/output:/data/output
+
+  notifier:
+    build: ./functions/notifier
+    container_name: notifier
